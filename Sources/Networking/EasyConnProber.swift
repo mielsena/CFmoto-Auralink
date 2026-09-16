@@ -28,8 +28,13 @@ import Darwin
 protocol BikeVideoSource: Sendable {
     /// REQ_RV_CONFIG_CAPTURE (16): the bike told us its requested canvas; the profile-rounded
     /// width/height is what the encoder should actually target (docs/01-PROTOCOL-REFERENCE.md §4 —
-    /// "this is where the ACTUAL encoder resolution gets decided").
-    func configureCanvas(width: Int, height: Int) async
+    /// "this is where the ACTUAL encoder resolution gets decided"). The tuning params come from the
+    /// active `BikeProfile` (`handshake.profile`), not hardcoded here, so a future non-CFDL16
+    /// profile's different bitrate/fps/keyframe interval flows through automatically.
+    func configureCanvas(
+        width: Int, height: Int, bitrate: Int, frameRate: Int,
+        keyframeIntervalSeconds: Int, forceBaseline: Bool
+    ) async
     /// REQ_RV_DATA_START (112): the bike is about to start pulling frames. Make sure the very next
     /// one is a fresh keyframe (SPS/PPS + IDR) so a cold-starting decoder locks on immediately.
     func onBikeDataStart() async
@@ -323,7 +328,11 @@ actor EasyConnProber {
         let (rw, rh) = profile.roundCaptureDimensions(width: req.deviceWidth, height: req.deviceHeight)
         negotiatedWidth = rw > 0 ? rw : negotiatedWidth
         negotiatedHeight = rh > 0 ? rh : negotiatedHeight
-        await videoSource?.configureCanvas(width: negotiatedWidth, height: negotiatedHeight)
+        await videoSource?.configureCanvas(
+            width: negotiatedWidth, height: negotiatedHeight,
+            bitrate: profile.videoBitrate, frameRate: profile.videoFrameRate,
+            keyframeIntervalSeconds: profile.videoIFrameIntervalSec, forceBaseline: profile.forceBaseline
+        )
 
         let reply = RvConfigCaptureReply(
             encoder: req.wantEncoder == 0 ? 2 : req.wantEncoder,

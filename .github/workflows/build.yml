@@ -20,8 +20,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Pin to the /Applications/Xcode.app symlink (GitHub's runner images always keep this
+      # pointing at the current default/latest stable Xcode with matching simulator runtimes
+      # preinstalled) rather than a specific "Xcode_16.app" version string — a hardcoded version
+      # broke CI once already when the runner image's available versions/runtimes drifted out of
+      # sync with a pinned SDK (see git history: "No simulator runtime version ... available to
+      # use with iphonesimulator SDK version"). Logging the version + runtimes here makes the next
+      # such mismatch immediately diagnosable from the Actions log instead of a bare BUILD FAILED.
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+          xcrun simctl list runtimes
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -38,12 +48,27 @@ jobs:
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
 
+      # Select an available iPhone simulator by UDID rather than a hardcoded device name
+      # ("iPhone 16") — device names come and go across Xcode/simulator releases, and picking
+      # whatever is actually installed on the runner is more durable than guessing one.
+      - name: Select a simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available | grep -m1 -E "iPhone" | grep -oE '[0-9A-F-]{36}')
+          if [ -z "$UDID" ]; then
+            echo "No available iPhone simulator found:"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          echo "Selected simulator UDID: $UDID"
+
       - name: Run unit tests
         run: |
           xcodebuild test \
             -project AuraLink.xcodeproj \
             -scheme AuraLink \
-            -destination "platform=iOS Simulator,name=iPhone 16" \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
             CODE_SIGNING_ALLOWED=NO
 
   release-testflight:
@@ -55,7 +80,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
 
       - name: Install XcodeGen and fastlane
         run: |
