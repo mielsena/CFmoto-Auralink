@@ -75,6 +75,9 @@ struct RvConfigCaptureRequest {
     let deviceHeight: Int
     let wantFps: Int32
     let wantEncoder: Int32
+    /// @29 in the full body layout (docs/01-PROTOCOL-REFERENCE.md §4) — echoed back verbatim in the
+    /// RLY_RV_CONFIG_CAPTURE reply's `supportExtendProtocol` byte.
+    let supportExtendProtocol: UInt8
     let encryptedHUID: String
 
     /// Parses as much of the body as is present — the Android app tolerates a short/legacy body by
@@ -84,11 +87,15 @@ struct RvConfigCaptureRequest {
         let h = body.count >= 4 ? Int(body.readLE(UInt16.self, at: 2)) : 0
         let fps = body.count >= 8 ? body.readLE(Int32.self, at: 4) : 0
         let encoder = body.count >= 12 ? body.readLE(Int32.self, at: 8) : 2
+        let ext = body.count >= 30 ? body[body.startIndex + 29] : 0
         var huid = ""
         if body.count > 30 {
             huid = String(data: body.suffix(from: 30), encoding: .utf8) ?? ""
         }
-        return RvConfigCaptureRequest(deviceWidth: w, deviceHeight: h, wantFps: fps, wantEncoder: encoder, encryptedHUID: huid)
+        return RvConfigCaptureRequest(
+            deviceWidth: w, deviceHeight: h, wantFps: fps, wantEncoder: encoder,
+            supportExtendProtocol: ext, encryptedHUID: huid
+        )
     }
 }
 

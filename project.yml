@@ -63,6 +63,11 @@ targets:
       path: App/AuraLink.entitlements
       properties:
         com.apple.developer.networking.wifi-info: true
+        # Restricted entitlement required by NEHotspotConfiguration (BikeWifiManager.swift) to join
+        # the bike's SoftAP programmatically. Apple may ask for justification when generating the
+        # provisioning profile — flag this to Miel if the TestFlight archive/signing step fails on
+        # it (see docs/04-CONTINUE-HANDOFF.md gotcha #1). Not something CI can resolve unattended.
+        com.apple.developer.networking.HotspotConfiguration: true
 
   AuraLinkTests:
     type: bundle.unit-test
