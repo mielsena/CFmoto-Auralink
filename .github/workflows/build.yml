@@ -1,0 +1,79 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      upload_testflight:
+        description: "Upload the build to TestFlight after a successful build"
+        type: boolean
+        default: false
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build (Debug, simulator — no signing needed)
+        run: |
+          xcodebuild build \
+            -project AuraLink.xcodeproj \
+            -scheme AuraLink \
+            -destination "generic/platform=iOS Simulator" \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Run unit tests
+        run: |
+          xcodebuild test \
+            -project AuraLink.xcodeproj \
+            -scheme AuraLink \
+            -destination "platform=iOS Simulator,name=iPhone 16" \
+            CODE_SIGNING_ALLOWED=NO
+
+  release-testflight:
+    needs: build-and-test
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.upload_testflight == 'true'
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+
+      - name: Install XcodeGen and fastlane
+        run: |
+          brew install xcodegen
+          gem install bundler
+          bundle install --gemfile=fastlane/Gemfile || gem install fastlane
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      # Requires these repo secrets (see docs/02-IOS-ARCHITECTURE-PLAN.md → CI/CD section):
+      #   ASC_KEY_ID       — App Store Connect API key ID
+      #   ASC_ISSUER_ID    — App Store Connect API issuer ID
+      #   ASC_KEY_P8       — the .p8 private key file, base64-encoded
+      #   MATCH_PASSWORD   — only needed if you later switch to fastlane match for cert management
+      - name: Build, sign, and upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: fastlane beta

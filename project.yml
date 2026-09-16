@@ -1,0 +1,92 @@
+name: AuraLink
+options:
+  bundleIdPrefix: com.amielsena
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_BITCODE: NO
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    DEVELOPMENT_TEAM: "$(DEVELOPMENT_TEAM)"
+    CODE_SIGN_STYLE: Automatic
+
+packages: {}
+
+targets:
+  AuraLink:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: App
+      - path: Sources
+    resources:
+      - path: App/Assets.xcassets
+      - path: App/Localizable.strings
+        optional: true
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: AuraLink
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSLocationWhenInUseUsageDescription: "AuraLink needs your location to show your position and speed on the bike dash, and to log rides."
+        NSLocationAlwaysAndWhenInUseUsageDescription: "AuraLink needs background location to keep logging your ride and to keep the dash connection alive while your phone is locked."
+        NSLocalNetworkUsageDescription: "AuraLink connects to your Aura 150's dashboard over its own Wi-Fi hotspot to stream navigation to the screen."
+        NSBonjourServices:
+          - "_EasyConn._tcp"
+          - "_aawireless._tcp"
+        NSCameraUsageDescription: "AuraLink uses the camera to scan the pairing QR code shown on your bike's dashboard."
+        NSMicrophoneUsageDescription: "AuraLink can stream your phone's microphone to voice assistants while riding."
+        NSBluetoothAlwaysUsageDescription: "AuraLink uses Bluetooth to read handlebar remote button presses and connect to paired remotes."
+        UIBackgroundModes:
+          - location
+          - audio
+          - voip
+          - processing
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.amielsena.auralink
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    entitlements:
+      path: App/AuraLink.entitlements
+      properties:
+        com.apple.developer.networking.wifi-info: true
+
+  AuraLinkTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Tests
+    dependencies:
+      - target: AuraLink
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.amielsena.auralink.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  AuraLink:
+    build:
+      targets:
+        AuraLink: all
+        AuraLinkTests: [test]
+    test:
+      targets:
+        - AuraLinkTests
+    run:
+      config: Debug
+    archive:
+      config: Release

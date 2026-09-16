@@ -1,0 +1,4 @@
+app_identifier("com.amielsena.auralink")
+# apple_id / team_id are intentionally omitted — auth is via the App Store Connect API key
+# (ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_P8 env vars, wired in the Fastfile) so this file has
+# no per-developer secrets in it and is safe to commit.

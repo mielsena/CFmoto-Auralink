@@ -1,0 +1,47 @@
+AuraLink
+========
+
+Copyright (C) 2026 Amiel Sena and the AuraLink contributors.
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version. See the LICENSE file for the full text.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+--------------------------------------------------------------------------------
+Why AGPL-3.0
+--------------------------------------------------------------------------------
+
+AuraLink is an iOS port of OpenCfMoto (https://github.com/zanderp/open-cfmoto),
+which is licensed AGPL-3.0-or-later. The Carbit EasyConnect / PXC protocol
+implementation in this app (framing, handshake sequence, cmd IDs, video pipeline
+tuning constants) is a direct derivative of OpenCfMoto's reverse-engineering
+work and Kotlin source. Under the terms of the AGPL, this derivative work must
+also be distributed under AGPL-3.0-or-later, and anyone who redistributes
+AuraLink (or runs a modified version as a network-accessible service) must make
+the complete corresponding source available under the same license and preserve
+the copyright and attribution notices below.
+
+--------------------------------------------------------------------------------
+Upstream project
+--------------------------------------------------------------------------------
+
+OpenCfMoto — Copyright (C) 2026 Alexandru <https://alexandru.rocks> and the
+OpenCfMoto contributors. https://github.com/zanderp/open-cfmoto
+
+A full copy of the upstream Kotlin source this port derives from is included
+under reference/android-source/ for traceability. See that project's own
+NOTICE file (reference/android-docs/ does not include it verbatim, but it is
+part of the upstream repository at the URL above) for its own list of
+incorporated third-party code (e.g. headunit-revived, also AGPLv3).
+
+--------------------------------------------------------------------------------
+AuraLink-specific copyright holders
+--------------------------------------------------------------------------------
+
+Copyright is held by the respective authors of each contribution to the iOS
+port. See the project's git history for individual attribution.
