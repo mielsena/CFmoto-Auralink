@@ -12,12 +12,13 @@
 // style tappable icon rail — the Aura 150 is non-touch (handlebar buttons only, per
 // docs/00-README-HANDOFF.md), so nothing here can be a button; both rails are read-only readouts.
 //
-// Data-source honesty: "Speed" is real (GPS via CoreLocation, already planned for trip logging).
-// "Fuel" is explicitly rendered as unavailable, NOT a fake number — per
-// reference/android-docs/RE-VEHICLE-TELEMETRY.md, CFMoto gates fuel/RPM/engine-temp behind their
-// paid T-Box; it reaches the phone through none of BLE, the PXC/video protocol, or the dash's
-// Wi-Fi network. The only real path is a separate Bluetooth OBD-II dongle at the bike's diagnostic
-// port — a hardware purchase Miel hasn't decided on, so this mockup doesn't pretend to have it.
+// Data-source honesty: right rail only shows readouts we can actually source — Speed/ETA/distance
+// come from GPS + route progress (CoreLocation/MKDirections, already planned for trip logging).
+// Fuel/RPM/engine-temp are deliberately NOT in this design — per
+// reference/android-docs/RE-VEHICLE-TELEMETRY.md, CFMoto gates them behind their paid T-Box and
+// none of BLE, the PXC/video protocol, or the dash's Wi-Fi network expose them. The only real path
+// is a separate Bluetooth OBD-II dongle at the bike's diagnostic port; Miel decided (2026-09-16)
+// not to design around hardware he hasn't bought — revisit only if that changes.
 //
 // Background treatment: hand-built "liquid glass" look (frosted material + dark tint for text
 // contrast + soft light rim gradient) since the iOS 16 deployment target predates Apple's real
@@ -147,12 +148,14 @@ struct DashMockPreview: View {
     // Right rail: real-data readouts stacked top to bottom. Speed is the biggest/most prominent
     // since it's both real (GPS) and the most safety-relevant. Fuel is explicitly "—" with a
     // caption, not a fabricated number — see file header.
+    // Fuel/engine-temp deliberately omitted — confirmed unreachable without a separate OBD2
+    // dongle (reference/android-docs/RE-VEHICLE-TELEMETRY.md), and Miel decided not to design
+    // around hardware he hasn't bought. Revisit only if that changes.
     private var rightRail: some View {
         VStack(spacing: 10) {
             telemetryCard(value: "62", unit: "km/h", label: "SPEED", valueColor: .white, prominent: true)
             telemetryCard(value: "12", unit: "min", label: "ETA", valueColor: .white, prominent: false)
             telemetryCard(value: "6.4", unit: "km", label: "TO GO", valueColor: .white, prominent: false)
-            fuelPlaceholderCard
             Spacer(minLength: 0)
         }
         .frame(width: 168)
@@ -179,25 +182,6 @@ struct DashMockPreview: View {
         .liquidGlass(cornerRadius: 16)
     }
 
-    // Deliberately not a gauge with a fake needle position — that would imply we have real data.
-    // A flat "—" plus a one-line caption is the honest version of "not available yet."
-    private var fuelPlaceholderCard: some View {
-        VStack(spacing: 2) {
-            Text("FUEL")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.55))
-                .tracking(1.2)
-            Text("—")
-                .font(.system(size: 26, weight: .bold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.4))
-            Text("needs OBD2 dongle")
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.white.opacity(0.4))
-        }
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity)
-        .liquidGlass(cornerRadius: 16, tintOpacity: 0.4)
-    }
 }
 
 // `previewLayout`/`traits: .sizeThatFitsLayout` are unavailable pre-iOS 17 — the view already
